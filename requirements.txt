@@ -1,0 +1,12 @@
+# Data
+pandas==1.5.3
+xlrd==2.0.1
+openpyxl
+
+# Models
+transformers==4.34.1
+torch==2.1.0
+camel_tools==1.5.2
+
+# Development tools
+black==23.1.0
