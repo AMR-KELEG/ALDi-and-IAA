@@ -116,7 +116,7 @@ if __name__ == "__main__":
     # DCD
     LABEL = "offensive"
     labels_dictionary = {-2: "Obscene", -1: "Offensive", 0: "Clean"}
-    df = pd.read_excel("data/raw_data/AJCommentsClassification-CF.xlsx").head(n=100)
+    df = pd.read_excel("data/raw_data/AJCommentsClassification-CF.xlsx")
 
     # The "Title" is shown during annotation
     df["Title"] = df["articletitle"]
