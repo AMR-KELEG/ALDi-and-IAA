@@ -55,7 +55,7 @@ def augment_with_labels(df):
 
 if __name__ == "__main__":
     OUTPUT_DIR = "data/processed"
-    os.makedirs(OUTPUT_DIR)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     ############ DATASET ############
     # YouTube Cyberbullying
     LABEL = "hate_speech"
