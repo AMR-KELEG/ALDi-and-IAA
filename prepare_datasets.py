@@ -212,19 +212,30 @@ if __name__ == "__main__":
         text = g_df["text"].iloc[0]
         return {"text": text, "stance": labels}
 
-    df_job1_st = pd.read_csv("data/raw_data/Mawqif/Job-1/f1863480.csv") # -> stance_class
-    df_job2_st = pd.read_csv("data/raw_data/Mawqif/Job-3/f1924391.csv") # -> stance
-    df_job3_st = pd.read_csv("data/raw_data/Mawqif/Job-5/f1936005.csv") # -> stance
-    df_job4_st = pd.read_csv("data/raw_data/Mawqif/Job-7/f1939335.csv") # -> stance (has one sample with missing label!)
+    df_job1_st = pd.read_csv(
+        "data/raw_data/Mawqif/Job-1/f1863480.csv"
+    )  # -> stance_class
+    df_job2_st = pd.read_csv("data/raw_data/Mawqif/Job-3/f1924391.csv")  # -> stance
+    df_job3_st = pd.read_csv("data/raw_data/Mawqif/Job-5/f1936005.csv")  # -> stance
+    df_job4_st = pd.read_csv(
+        "data/raw_data/Mawqif/Job-7/f1939335.csv"
+    )  # -> stance (has one sample with missing label!)
     df_job1_st["stance"] = df_job1_st["stance_class"]
     LABEL = "stance"
 
-    concat_st_df = pd.concat([df[["text", "stance"]] for df in [df_job1_st, df_job2_st, df_job3_st, df_job4_st]])
+    concat_st_df = pd.concat(
+        [
+            df[["text", "stance"]]
+            for df in [df_job1_st, df_job2_st, df_job3_st, df_job4_st]
+        ]
+    )
 
     # Drop the single entry with missing label
     concat_st_df.dropna(subset=["stance"], inplace=True)
 
-    Mawqif_stance_df = pd.DataFrame(concat_st_df.groupby("text").apply(lambda g_df: group_samples(g_df)).tolist())
+    Mawqif_stance_df = pd.DataFrame(
+        concat_st_df.groupby("text").apply(lambda g_df: group_samples(g_df)).tolist()
+    )
     augment_with_labels(Mawqif_stance_df)
     Mawqif_stance_df[COMMON_COLUMNS + [LABEL]].to_csv(
         str(Path(OUTPUT_DIR, "Mawqif_stance.tsv")), sep="\t", index=False
@@ -237,19 +248,44 @@ if __name__ == "__main__":
         text = g_df["text"].iloc[0]
         return {"text": text, "sarcasm": sarcasm_labels, "sentiment": sentiment_labels}
 
-    df_job2 = pd.read_csv("data/raw_data/Mawqif/Job-2/f1878986.csv") # -> sarcasm_label (0, 1) | sentiment_label (1, 2, 3)
-    df_job4 = pd.read_csv("data/raw_data/Mawqif/Job-4/f1926566.csv") # -> sarcasm (Yes, No) | sentiment (Positive, Neutral, Negative)
-    df_job6 = pd.read_csv("data/raw_data/Mawqif/Job-6/f1936443.csv") # -> sarcasm (Yes, No) | sentiment (Positive, Neutral, Negative)
-    df_job8 = pd.read_csv("data/raw_data/Mawqif/Job-8/f1939489.csv") # -> sarcasm (Yes, No) | sentiment (Positive, Neutral, Negative)
+    df_job2 = pd.read_csv(
+        "data/raw_data/Mawqif/Job-2/f1878986.csv"
+    )  # -> sarcasm_label (0, 1) | sentiment_label (1, 2, 3)
+    df_job4 = pd.read_csv(
+        "data/raw_data/Mawqif/Job-4/f1926566.csv"
+    )  # -> sarcasm (Yes, No) | sentiment (Positive, Neutral, Negative)
+    df_job6 = pd.read_csv(
+        "data/raw_data/Mawqif/Job-6/f1936443.csv"
+    )  # -> sarcasm (Yes, No) | sentiment (Positive, Neutral, Negative)
+    df_job8 = pd.read_csv(
+        "data/raw_data/Mawqif/Job-8/f1939489.csv"
+    )  # -> sarcasm (Yes, No) | sentiment (Positive, Neutral, Negative)
 
-    df_job2["sentiment"] = df_job2["sentiment_label"].apply(lambda l: "Positive" if int(l)==1 else "Negative" if int(l)==3 else "Neutral")
-    df_job2["sarcasm"] = df_job2["sarcasm_label"].apply(lambda l: "Yes" if int(l)==1 else "No")
+    df_job2["sentiment"] = df_job2["sentiment_label"].apply(
+        lambda l: "Positive"
+        if int(l) == 1
+        else "Negative"
+        if int(l) == 3
+        else "Neutral"
+    )
+    df_job2["sarcasm"] = df_job2["sarcasm_label"].apply(
+        lambda l: "Yes" if int(l) == 1 else "No"
+    )
 
-    concat_sarcasm_df = pd.concat([df[["text", "sentiment", "sarcasm"]] for df in [df_job2, df_job4, df_job6, df_job8]])
+    concat_sarcasm_df = pd.concat(
+        [
+            df[["text", "sentiment", "sarcasm"]]
+            for df in [df_job2, df_job4, df_job6, df_job8]
+        ]
+    )
 
     LABEL1 = "sentiment"
     LABEL2 = "sarcasm"
-    Mawqif_sarcasm_df = pd.DataFrame(concat_sarcasm_df.groupby("text").apply(lambda g_df: group_samples(g_df)).tolist())
+    Mawqif_sarcasm_df = pd.DataFrame(
+        concat_sarcasm_df.groupby("text")
+        .apply(lambda g_df: group_samples(g_df))
+        .tolist()
+    )
 
     augment_with_labels(Mawqif_sarcasm_df)
     Mawqif_sarcasm_df[COMMON_COLUMNS + [LABEL1, LABEL2]].to_csv(
