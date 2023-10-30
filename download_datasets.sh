@@ -24,14 +24,14 @@ DART_URL="https://ucba8efb7f65c5060d175400df00.dl.dropboxusercontent.com/cd/0/ge
 mkdir -p "${RAW_DATA_DIR}"
 cd "${RAW_DATA_DIR}"
 
-# wget -c "${MPOLD_URL}"
+wget -c "${MPOLD_URL}"
 
-# wget -c "${ALJAZEERA_COMMENTS_URL}"
-# wget -c "${ARSAS_URL}"
-# unzip "ArSAS.zip"
+wget -c "${ALJAZEERA_COMMENTS_URL}"
+wget -c "${ARSAS_URL}"
+unzip "ArSAS.zip"
 
-# wget -c "${ISARCASM_URL}"
-# mv arabic_task_a.csv "iSarcasm_third_party.csv"
+wget -c "${ISARCASM_URL}"
+mv arabic_task_a.csv "iSarcasm_third_party.csv"
 
 ### DRAFT ###
 # wget -c "${MAWQIF_TRAIN_URL}"

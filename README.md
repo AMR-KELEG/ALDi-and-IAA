@@ -17,7 +17,8 @@ camel_data -i defaults
 | ArSAS| [Personal Site](https://homepages.inf.ed.ac.uk/wmagdy/Resources/ArSAS.zip) |
 | ArSarcasm-v1 | Provided by the authors |
 | iSarcasm (third-party annotations) | [GitHub](https://raw.githubusercontent.com/iabufarha/iSarcasmEval/main/third-party%20annotations/arabic_task_a.csv)| 
-| DART | [Personal Site](https://www.dropbox.com/s/jslg6fzxeu47flu/DART.zip?dl=0) | 
+| DART | [Dropbox](https://www.dropbox.com/s/jslg6fzxeu47flu/DART.zip?dl=0) |
+| Mawqif | Provided by the authors |
 
 ## Running the experiments
 ```
@@ -25,4 +26,25 @@ camel_data -i defaults
 # NOTE: YouTube Cyberbullying and DART need to be manually downloaded!
 ./download_datasets.sh
 
+# Augment the dataset files with ALDi scores, and dialect labels
+python prepare_dataset.py
 ```
+
+## Notes about the Mawqif dataset
+|   Job #  |   Task                 |   Topic                   |
+|----------|------------------------|---------------------------|
+|   1      |   Stance               |   Covid vaccine           |
+|   2      |   Sentiment + Sarcasm  |   Covid vaccine           |
+|   3      |   Stance               |   Women empowerment       |
+|   4      |   Sentiment + Sarcasm  |   Women empowerment       |
+|   5      |   Stance               |   Digital transformation  |
+|   6      |   Sentiment + Sarcasm  |   Digital transformation  |
+|   7      |   Stance               |   Multi                   |
+|   8      |   Sentiment + Sarcasm  |   Multi                   |
+
+- Stance has three classes: a) Favor, b) Against, c) None
+    - Each class has two subclasses for reasons:
+        - a.1) Explicit, a.2) Implicit
+        - b.1) Explicit, b.2) Implicit
+        - c.1) Not clear, c.2) Not related
+    - The subclass annotation can sometimes be missing
