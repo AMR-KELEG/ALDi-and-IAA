@@ -77,6 +77,22 @@ if __name__ == "__main__":
     OUTPUT_DIR = "data/processed"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     ############ DATASET ############
+    # LetMI
+    LABEL1 = "misogyny_general"
+    LABEL2 = "misogyny_specific"
+    df = pd.read_excel("data/raw_data/LetMI.xlsx")
+    df["misogyny_general"] = df.apply(
+        lambda row: [row[f"r{i}_gen"] for i in range(1, 3)], axis=1
+    )
+    df["misogyny_specific"] = df.apply(
+        lambda row: [row[f"r{i}_spec"] for i in range(1, 3)], axis=1
+    )
+    df[TEXT_COLUMN] = df["tweet"]
+    augment_with_labels(df)
+    df[COMMON_COLUMNS + [LABEL1, LABEL2]].to_csv(
+        str(Path(OUTPUT_DIR, "LetMI.tsv")), sep="\t", index=False
+    )
+
     # YouTube Cyberbullying
     LABEL = "hate_speech"
     df = pd.read_excel("data/raw_data/YouTube_cyberbullying.xlsx")

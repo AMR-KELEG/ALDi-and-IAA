@@ -25,7 +25,7 @@ def generate_scatter_plot(
     dataset_name,
     label_name,
     bins_stats,
-    figsize=(6.3 / 4, 1.5),
+    figsize=(6.3 / 4, 1.25),
 ):
     plt.figure(figsize=figsize)
     bins_boundaries = [bin_boundaries for bin_boundaries, bin_stats in bins_stats]
@@ -63,11 +63,11 @@ def generate_scatter_plot(
             dataset_name == "arabic_dialect_familiarity" and label_name == "dialect"
         )
         else 0,
-        100
+        105
         if not (
             dataset_name == "arabic_dialect_familiarity" and label_name == "dialect"
         )
-        else 60,
+        else 65,
     )
     # plt.legend(title="", frameon=False, prop={"size": 5})
     plt.xlim(0, 1)
@@ -186,6 +186,7 @@ def generate_ALDi_histograms(
         "Mawqif_stance",
         "Mawqif_sarcasm",
         "arabic_dialect_familiarity",
+        "LetMI",
     ]:
         Y_LIM = 1400
     else:

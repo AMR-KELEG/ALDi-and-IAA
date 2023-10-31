@@ -66,6 +66,10 @@ def load_datasets():
     labels_lists.append(["dialect", "sarcasm"])
     labels_types_lists.append([LabelType.INDIV, LabelType.INDIV])
 
+    dataset_names.append("LetMI")
+    labels_lists.append(["misogyny_general", "misogyny_specific"])
+    labels_types_lists.append([LabelType.INDIV, LabelType.INDIV])
+
     datasets = []
     for dataset_name, labels, labels_types in zip(
         dataset_names, labels_lists, labels_types_lists
