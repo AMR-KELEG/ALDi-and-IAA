@@ -53,6 +53,26 @@ def augment_with_labels(df):
     return df
 
 
+def form_aggregated_row(gdf, SINGLE_VALUE_COLUMNS, ANNOTATION_COLUMNS, LABELS):
+    gdf.fillna("", inplace=True)
+    row = {}
+    for col in SINGLE_VALUE_COLUMNS:
+        try:
+            assert len(set(gdf[col])) == 1
+        except Exception as e:
+            raise e
+        row[col] = gdf[col].iloc[0]
+
+    for col in LABELS:
+        row[col] = gdf[col].tolist()
+
+    for col in ANNOTATION_COLUMNS:
+        row[col] = gdf[col].tolist()
+
+    assert set(gdf.columns) == set(SINGLE_VALUE_COLUMNS + LABELS + ANNOTATION_COLUMNS)
+    return row
+
+
 if __name__ == "__main__":
     OUTPUT_DIR = "data/processed"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -290,4 +310,29 @@ if __name__ == "__main__":
     augment_with_labels(Mawqif_sarcasm_df)
     Mawqif_sarcasm_df[COMMON_COLUMNS + [LABEL1, LABEL2]].to_csv(
         str(Path(OUTPUT_DIR, "Mawqif_sarcasm.tsv")), sep="\t", index=False
+    )
+
+    df = pd.read_csv("data/raw_data/arabic_dialect_familiarity.csv")
+    SINGLE_VALUE_COLUMNS = ["id", "text", "original_dialect", "original_sarcasm"]
+    ANNOTATION_COLUMNS = [
+        "gender",
+        "annotator_mother_dialect",
+        "annotator_known_dialects",
+    ]
+    LABELS = ["dialect", "sarcasm"]
+
+    agg_df = pd.DataFrame(
+        df.groupby("id")
+        .apply(
+            lambda gdf: form_aggregated_row(
+                gdf, SINGLE_VALUE_COLUMNS, ANNOTATION_COLUMNS, LABELS
+            )
+        )
+        .reset_index(drop=True)
+        .tolist()
+    ).sort_values(by="id")
+
+    augment_with_labels(agg_df)
+    agg_df[COMMON_COLUMNS + LABELS].to_csv(
+        str(Path(OUTPUT_DIR, "arabic_dialect_familiarity.tsv")), sep="\t", index=False
     )
