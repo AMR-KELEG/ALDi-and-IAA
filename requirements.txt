@@ -8,5 +8,8 @@ transformers==4.34.1
 torch==2.1.0
 camel_tools==1.5.2
 
+# Visualization
+matplotlib==3.7.0
+
 # Development tools
 black==23.1.0
