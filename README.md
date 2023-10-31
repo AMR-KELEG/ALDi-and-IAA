@@ -16,7 +16,7 @@ camel_data -i defaults
 | DCD | [Personal Site](http://alt.qcri.org/~hmubarak/offensive/AJCommentsClassification-CF.xlsx) |
 | ArSAS| [Personal Site](https://homepages.inf.ed.ac.uk/wmagdy/Resources/ArSAS.zip) |
 | ArSarcasm-v1 | Provided by the authors |
-| iSarcasm (third-party annotations) | [GitHub](https://raw.githubusercontent.com/iabufarha/iSarcasmEval/main/third-party%20annotations/arabic_task_a.csv)| 
+| Arabic Dialect Familiarity | [GitHub](https://raw.githubusercontent.com/iabufarha/arabic-dialect-familiarity/main/dialect_familiarity_sarcasm.csv)|
 | DART | [Dropbox](https://www.dropbox.com/s/jslg6fzxeu47flu/DART.zip?dl=0) |
 | Mawqif | Provided by the authors |
 
