@@ -20,6 +20,7 @@ DART_URL="https://ucba8efb7f65c5060d175400df00.dl.dropboxusercontent.com/cd/0/ge
 ### DRAFT ###
 # MAWQIF_TRAIN_URL="https://raw.githubusercontent.com/NoraAlt/Mawqif-Arabic-Stance/main/Data/Mawqif_AllTargets_Train.csv"
 # MAWQIF_TEST_URL="https://raw.githubusercontent.com/NoraAlt/Mawqif-Arabic-Stance/main/Data/Mawqif_AllTargets_Test.csv"
+ARABIC_DIALECT_FAMILIARITY_URL="https://raw.githubusercontent.com/iabufarha/arabic-dialect-familiarity/main/dialect_familiarity_sarcasm.csv"
 
 mkdir -p "${RAW_DATA_DIR}"
 cd "${RAW_DATA_DIR}"
@@ -33,9 +34,4 @@ unzip "ArSAS.zip"
 wget -c "${ISARCASM_URL}"
 mv arabic_task_a.csv "iSarcasm_third_party.csv"
 
-### DRAFT ###
-# wget -c "${MAWQIF_TRAIN_URL}"
-# wget -c "${MAWQIF_TEST_URL}"
-
-# cat Mawqif_AllTargets_*.csv > Mawqif_AllTargets.csv
-# rm Mawqif_AllTargets_*.csv
+wget -c "${ARABIC_DIALECT_FAMILIARITY_URL}" -O "arabic_dialect_familiarity.csv"
