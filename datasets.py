@@ -1,10 +1,17 @@
+import os
 import pandas as pd
 from pathlib import Path
 from enum import Enum
+from collections import Counter
 
 LabelType = Enum("LabelType", ["CONF", "INDIV", "PROPORTION"])
 
 DATA_DIR = "data/processed/"
+
+
+def get_majority_vote(individual_annotations):
+    label, count = Counter(individual_annotations).most_common(1)[0]
+    return (label, count / len(individual_annotations))
 
 
 class IndividualLabelsDataset:
@@ -18,10 +25,28 @@ class IndividualLabelsDataset:
             # TODO: Apply preprocessing for the other types
             if label_type == LabelType.INDIV:
                 self.df[label] = self.df[label].apply(lambda s: s[1:-1].split(", "))
+                self.df[f"{label}_majority_vote"] = self.df[label].apply(
+                    lambda indiv_labels: get_majority_vote(indiv_labels)
+                )
             elif label_type == LabelType.CONF or label_type == LabelType.PROPORTION:
                 self.df[label] = self.df[label].apply(lambda s: s[1:-1].split(","))
                 # Parse the confidence score (the last value in the tuple)
                 self.df[label] = self.df[label].apply(lambda t: t[:-1] + [float(t[-1])])
+
+            n_labels_per_sample = self.df[label].apply(lambda l: len(l)).tolist()
+            try:
+                assert len(set(n_labels_per_sample)) == 1
+            except:
+                print(
+                    dataset_name,
+                    "Different no of labels per sample!",
+                    ",".join([str(n_labels) for n_labels in set(n_labels_per_sample)]),
+                )
+
+    def export(self, output_dir):
+        self.df.to_csv(
+            str(Path(output_dir, f"{self.dataset_name}.tsv")), sep="\t", index=False
+        )
 
 
 def load_datasets():

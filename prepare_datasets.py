@@ -50,6 +50,7 @@ def augment_with_labels(df):
     df[DIALECT26_COLUMN] = df[TEXT_COLUMN].progress_apply(
         lambda t: di_model26.predict([t])[0].top
     )
+
     return df
 
 

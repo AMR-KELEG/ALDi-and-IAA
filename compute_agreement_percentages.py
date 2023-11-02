@@ -6,6 +6,8 @@ from collections import Counter
 import matplotlib
 import matplotlib.pyplot as plt
 from datasets import load_datasets, LabelType
+from matplotlib.ticker import FormatStrFormatter
+from pprint import pprint
 
 EPS = 1e-6
 font = {"weight": "bold", "size": 8}
@@ -21,58 +23,76 @@ PLOTS_DIR = "plots/"
 os.makedirs(PLOTS_DIR, exist_ok=True)
 
 
+def plot_bins_boundaries(bins_boundaries):
+    ax_other = plt.gca()
+    ax = ax_other.twinx()
+
+    # Plot the bin boundaries
+    for bin_st, _ in bins_boundaries[1:]:
+        ax.plot([bin_st, bin_st], [0, 100], "k:", alpha=0.1)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["bottom"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+
+
 def generate_scatter_plot(
     dataset_name,
     label_name,
     bins_stats,
+    plot_boundaries=False,
+    plot_hist=True,
     figsize=(6.3 / 4, 1.25),
+    ALDi_scores=None,
 ):
     plt.figure(figsize=figsize)
     bins_boundaries = [bin_boundaries for bin_boundaries, bin_stats in bins_stats]
     n_bins = len(bins_boundaries)
 
-    # Plot the bin boundaries
-    for bin_st, _ in bins_boundaries[1:]:
-        plt.plot([bin_st, bin_st], [0, 100], "k:", alpha=0.1)
+    ax = plt.gca()
+
+    if plot_boundaries:
+        plot_bins_boundaries(bins_boundaries)
+
+    if plot_hist:
+        generate_ALDi_histograms(
+            ALDi_scores,
+            dataset_name,
+            figsize=None,
+            bins=[0] + [bin_end for bin_st, bin_end in bins_boundaries],
+            save_fig=False,
+            alpha=0.2,
+            show_yticks=False,
+        )
 
     x = [(bin_st + bin_end) / 2 for bin_st, bin_end in bins_boundaries]
     agreement_percentages = [
         bin_stats["%_complete_agreement"] for _, bin_stats in bins_stats
     ]
 
-    plt.plot(
+    print("Diff", max(agreement_percentages) - min(agreement_percentages))
+    # Plot horizontal lines for range of agreement scores
+    ax.plot(
         [0, 1],
         [min(agreement_percentages), min(agreement_percentages)],
         "k--",
         alpha=0.2,
     )
-    plt.plot(
+    ax.plot(
         [0, 1],
         [max(agreement_percentages), max(agreement_percentages)],
         "k--",
         alpha=0.2,
     )
 
-    plt.scatter(x=x, y=agreement_percentages, color=VIOLET, label=label_name, s=4)
-    plt.ylabel("% full agree", fontsize=6)
-    plt.xlabel("ALDi", fontsize=6)
+    ax.scatter(x=x, y=agreement_percentages, color=VIOLET, label=label_name, s=4)
+    ax.set_ylabel("% full agree", fontsize=6)
+    ax.set_xlabel("ALDi", fontsize=6)
 
-    plt.ylim(
-        40
-        if not (
-            dataset_name in ["arabic_dialect_familiarity", "qweet"]
-            and label_name in ["dialect", "qweet"]
-        )
-        else 0,
-        105
-        if not (
-            dataset_name in ["arabic_dialect_familiarity", "qweet"]
-            and label_name in ["dialect", "qweet"]
-        )
-        else 65,
-    )
     # plt.legend(title="", frameon=False, prop={"size": 5})
-    plt.xlim(0, 1)
+    ax.set_xlim(0, 1)
 
     ### Fit a polynomial curve
     ### xp = np.linspace(0, 1, 100)
@@ -97,21 +117,38 @@ def generate_scatter_plot(
         fontsize=8,
     )
 
-    ax = plt.gca()
-
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    ax.spines["bottom"].set_visible(True)
+    ax.spines["bottom"].set_visible(False)
     ax.spines["left"].set_visible(True)
 
-    plt.xticks(fontsize=6)
-    plt.yticks(fontsize=6)
-    # yticks = list(plt.yticks()[0])
-    # plt.yticks(yticks, [f"{tick}%" for tick in yticks], fontsize=6)
+    RANGE = 40
+    lower_y = 10 * (min(agreement_percentages) // 10)
+    upper_y = 10 * (1 + max(agreement_percentages) // 10)
+
+    if upper_y - lower_y < RANGE:
+        offset = RANGE - (upper_y - lower_y)
+        lower_y -= offset / 2
+        upper_y += offset / 2
+
+    if upper_y > 105:
+        upper_y = 105
+        lower_y = upper_y - RANGE
+    ax.set_ylim(lower_y, upper_y)
+
+    xticks = [0.2, 0.4, 0.6, 0.8]
+    ax.set_xticks(
+        ticks=xticks, labels=[str(round(xtick, 1)) for xtick in xticks], fontsize=5
+    )
+    yticks = [v for v in range(int(lower_y), int(upper_y), 10)]
+    ax.set_yticks(ticks=yticks, labels=yticks, fontsize=5)
 
     plt.tight_layout()
     plt.savefig(
-        Path(PLOTS_DIR, f"{dataset_name}_{n_bins}_{label_name}.pdf"),
+        Path(
+            PLOTS_DIR,
+            f"{dataset_name}_{n_bins}_{label_name}{'_merged' if plot_hist else ''}.pdf",
+        ),
         bbox_inches="tight",
     )
 
@@ -155,11 +192,22 @@ def compute_percentage_of_agreement(
 
 
 def generate_ALDi_histograms(
-    ALDi_scores, dataset_name, figsize=(6.3 * 0.3, 1.5), bins=None
+    ALDi_scores,
+    dataset_name,
+    figsize=(6.3 * 0.3, 1.5),
+    bins=None,
+    save_fig=False,
+    alpha=1,
+    show_yticks=True,
 ):
-    plt.figure(figsize=figsize)
-    plt.hist(ALDi_scores, bins=bins, color=VIOLET)
-    ax = plt.gca()
+    if figsize:
+        plt.figure(figsize=figsize)
+        ax = plt.gca()
+    else:
+        ax_other = plt.gca()
+        ax = ax_other.twinx()
+
+    ax.hist(ALDi_scores, bins=bins, color=VIOLET, alpha=alpha)
 
     n_samples_per_bin = {
         (bin_st, bin_end): ((ALDi_scores >= bin_st) & (ALDi_scores < bin_end)).sum()
@@ -169,14 +217,14 @@ def generate_ALDi_histograms(
     }
 
     least_n_samples_per_bin = min(n_samples_per_bin.values())
+    most_n_samples_per_bin = max(n_samples_per_bin.values())
 
     ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    ax.spines["right"].set_visible(True)
     ax.spines["bottom"].set_visible(True)
     ax.spines["left"].set_visible(True)
 
-    plt.xticks(fontsize=6)
-    plt.yticks(fontsize=6)
+    ax.set_xticks(ticks=bins[1:], labels=bins[1:], rotation=90, fontsize=6)
 
     # Set the ylim
     Y_LIM = None
@@ -194,16 +242,23 @@ def generate_ALDi_histograms(
         Y_LIM = 1400
     else:
         Y_LIM = 15000
-    plt.ylim(0, Y_LIM)
 
-    plt.xticks(bins[1:], rotation=90)
-    plt.yticks(list(plt.yticks()[0])[1:] + [least_n_samples_per_bin])
+    # yticks = [int(v) for v in list(ax.get_yticks())[1:]] + [least_n_samples_per_bin]
+    if show_yticks:
+        yticks = [int(v) for v in list(ax.get_yticks())[1:]]
+        ax.set_yticks(ticks=yticks, labels=yticks, fontsize=6)
+    else:
+        yticks = [least_n_samples_per_bin, most_n_samples_per_bin]
+        ax.set_yticks(ticks=yticks, labels=yticks, fontsize=4)
+    ax.set_ylim(0, Y_LIM)
 
     plt.tight_layout()
-    plt.savefig(
-        Path(PLOTS_DIR, f"{dataset_name}_{len(bins)-1}_ALDi.pdf"),
-        bbox_inches="tight",
-    )
+
+    if save_fig:
+        plt.savefig(
+            Path(PLOTS_DIR, f"{dataset_name}_{len(bins)-1}_ALDi.pdf"),
+            bbox_inches="tight",
+        )
 
 
 def generate_bins(df, label_name, label_type, bins_boundaries):
@@ -220,21 +275,29 @@ def generate_bins(df, label_name, label_type, bins_boundaries):
 
         if label_type == LabelType.CONF:
             # Complete agreement samples
-            n_complete_agreement_samples = sum(
-                [confidence == 1 for label, confidence in bin_label_values.tolist()]
-            )
+            complete_agreement_labels = [
+                label
+                for label, confidence in bin_label_values.tolist()
+                if abs(confidence - 1) < EPS
+            ]
+
         elif label_type == LabelType.PROPORTION:
             # Complete agreement samples
-            n_complete_agreement_samples = sum(
-                [
-                    abs(confidence - 1) < EPS
-                    for label, confidence in bin_label_values.tolist()
-                ]
-            )
+            complete_agreement_labels = [
+                label
+                for label, confidence in bin_label_values.tolist()
+                if abs(confidence - 1) < EPS
+            ]
+
         else:
-            n_complete_agreement_samples = sum(
-                [len(set(labels)) == 1 for labels in bin_label_values.tolist()]
-            )
+            complete_agreement_labels = [
+                labels[0]
+                for labels in bin_label_values.tolist()
+                if len(set(labels)) == 1
+            ]
+
+        unique_labels = sorted(set(complete_agreement_labels))
+        n_complete_agreement_samples = len(complete_agreement_labels)
 
         n_samples = bin_label_values.shape[0]
 
@@ -247,12 +310,24 @@ def generate_bins(df, label_name, label_type, bins_boundaries):
                     "%_complete_agreement": round(
                         100 * n_complete_agreement_samples / n_samples, 2
                     ),
+                    "%_complete_agreement": round(
+                        100 * n_complete_agreement_samples / n_samples, 2
+                    ),
                 },
             )
         )
 
+        for label in unique_labels:
+            total_agreement_percentages[-1][-1][
+                f"%_complete_agreement_{label_name}_{label}"
+            ] = round(
+                100 * sum([l == label for l in complete_agreement_labels]) / n_samples,
+                2,
+            )
+
     print(label_name, label_type)
     print([stats["%_complete_agreement"] for bin, stats in total_agreement_percentages])
+
     return total_agreement_percentages
 
 
@@ -266,15 +341,17 @@ if __name__ == "__main__":
             df["ALDi"],
             dataset_name=dataset_name,
             bins=[0, 0.11, 0.44, 0.77, 1],
+            save_fig=True,
         )
         generate_ALDi_histograms(
             df["ALDi"],
             dataset_name=dataset_name,
             bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+            save_fig=True,
         )
 
         for label, label_type in zip(dataset.labels, dataset.labels_types):
-            print(i)
+            print(i, dataset_name)
             bins_stats = generate_bins(
                 df,
                 label,
@@ -283,4 +360,10 @@ if __name__ == "__main__":
                 bins_boundaries=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
             )
             i += 1
-            generate_scatter_plot(dataset_name, label, bins_stats)
+            generate_scatter_plot(
+                dataset_name,
+                label,
+                bins_stats,
+                ALDi_scores=df["ALDi"],
+                plot_boundaries=True,
+            )
