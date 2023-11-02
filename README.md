@@ -19,6 +19,7 @@ camel_data -i defaults
 | Arabic Dialect Familiarity | [GitHub](https://raw.githubusercontent.com/iabufarha/arabic-dialect-familiarity/main/dialect_familiarity_sarcasm.csv)|
 | DART | [Dropbox](https://www.dropbox.com/s/jslg6fzxeu47flu/DART.zip?dl=0) |
 | Mawqif | Provided by the authors |
+| Qweet | [Dropbox](https://www.dropbox.com/sh/coba3b1nqkyloa8/AAC4Sk5WQvtXZRgH5liBkMiGa?dl=0)|
 
 ## Running the experiments
 ```

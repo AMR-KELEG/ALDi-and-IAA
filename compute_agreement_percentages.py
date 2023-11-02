@@ -54,18 +54,20 @@ def generate_scatter_plot(
     )
 
     plt.scatter(x=x, y=agreement_percentages, color=VIOLET, label=label_name, s=4)
-    # plt.ylabel("% of samples of complete agreement")
-    # plt.xlabel("ALDi scores",)
+    plt.ylabel("% full agree", fontsize=6)
+    plt.xlabel("ALDi", fontsize=6)
 
     plt.ylim(
         40
         if not (
-            dataset_name == "arabic_dialect_familiarity" and label_name == "dialect"
+            dataset_name in ["arabic_dialect_familiarity", "qweet"]
+            and label_name in ["dialect", "qweet"]
         )
         else 0,
         105
         if not (
-            dataset_name == "arabic_dialect_familiarity" and label_name == "dialect"
+            dataset_name in ["arabic_dialect_familiarity", "qweet"]
+            and label_name in ["dialect", "qweet"]
         )
         else 65,
     )
@@ -104,8 +106,8 @@ def generate_scatter_plot(
 
     plt.xticks(fontsize=6)
     plt.yticks(fontsize=6)
-
-    # plt.yticks(list(plt.yticks()[0]) + [min(agreement_percentages), max(agreement_percentages)], fontsize=6)
+    # yticks = list(plt.yticks()[0])
+    # plt.yticks(yticks, [f"{tick}%" for tick in yticks], fontsize=6)
 
     plt.tight_layout()
     plt.savefig(
@@ -187,6 +189,7 @@ def generate_ALDi_histograms(
         "Mawqif_sarcasm",
         "arabic_dialect_familiarity",
         "LetMI",
+        "qweet",
     ]:
         Y_LIM = 1400
     else:

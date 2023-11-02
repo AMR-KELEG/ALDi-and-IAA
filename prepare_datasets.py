@@ -77,6 +77,18 @@ if __name__ == "__main__":
     OUTPUT_DIR = "data/processed"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     ############ DATASET ############
+    # Questions
+    LABEL = "qweet"
+    df = pd.read_csv("data/raw_data/qweet.txt", sep="\t", header=None)
+    df.columns = ["ID", "text", "qweet"]
+    # Drop values of low confidence
+    df = df[df["qweet"] > 0.3]
+    df[LABEL] = df[LABEL].apply(lambda conf: ("qweet", conf))
+    augment_with_labels(df)
+    df[COMMON_COLUMNS + [LABEL]].to_csv(
+        str(Path(OUTPUT_DIR, "qweet.tsv")), sep="\t", index=False
+    )
+
     # LetMI
     LABEL1 = "misogyny_general"
     LABEL2 = "misogyny_specific"
