@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from collections import Counter
 from datasets import LabelType, load_datasets
 from tqdm import tqdm
@@ -7,6 +9,16 @@ import matplotlib.pyplot as plt
 def compute_percentage_of_full_agreement(
     annotations_df, label_column, threshold_number_of_agreeing_annotators=None
 ):
+    """Compute the percentage of samples that have full agreement among the annotators.
+
+    Args:
+        annotations_df: A dataframe of annotated samples.
+        label_column: The label's column name.
+        threshold_number_of_agreeing_annotators: The minimum number of annotators for assuming full agreement.
+
+    Returns:
+        The percentage of samples that have full agreement among the annotators.
+    """
     if not threshold_number_of_agreeing_annotators:
         # Make sure all the samples have the same number of annotations
         assert (
@@ -45,6 +57,17 @@ def compute_percentage_of_full_agreement(
 def compute_percentage_high_confidence(
     annotations_df, label_column, threshold_confidence=0.98
 ):
+    """Compute the percentage of samples that have high annotation confidence.
+
+    Args:
+        annotations_df: A dataframe of annotated samples.
+        label_column: The label's column name.
+        threshold_confidence: The minimum threshold for confidence.
+            Confidence is a function of agreement among the annotators, and the accuracy of the annotators's labels on test samples.
+
+    Returns:
+        The percentage of samples that have high annotation confidence.
+    """
     return 100 * (
         annotations_df[
             annotations_df[label_column].apply(
@@ -62,6 +85,19 @@ def compute_agreement_score(
     threshold_number_of_agreeing_annotators=None,
     threshold_confidence=0.98,
 ):
+    """Compute the agreement score for a given label according to the label type.
+
+    Args:
+        annotations_df: A dataframe of annotated samples.
+        label_name: The label's column name.
+        label_type: The label's type.
+        threshold_number_of_agreeing_annotators: The minimum number of annotators for assuming full agreement.
+        threshold_confidence: The minimum threshold for confidence.
+            Confidence is a function of agreement among the annotators, and the accuracy of the annotators's labels on test samples.
+
+    Returns:
+        The agreement score for a given label according to the label type.
+    """
     if label_type == LabelType.INDIV:
         return compute_percentage_of_full_agreement(
             annotations_df,
@@ -79,6 +115,18 @@ def compute_agreement_score(
 
 
 def compute_confidence_interval(df1, df2, label, label_type, N_bootstrap=5000):
+    """Compute the confidence interval for the difference in agreement scores between two datasets.
+
+    Args:
+        df1:
+        df2: _description_
+        label: _description_
+        label_type: _description_
+        N_bootstrap: .
+
+    Returns:
+        _description_
+    """
     differences = []
     for i in tqdm(range(N_bootstrap)):
         bootstrapped_df1 = df1.sample(df1.shape[0], random_state=i, replace=True)
@@ -95,13 +143,31 @@ def compute_confidence_interval(df1, df2, label, label_type, N_bootstrap=5000):
 
 
 def split_data_by_MSA(df):
+    """Split the data into MSA and DA samples.
+
+    Args:
+        df: The dataframe of annotated samples.
+
+    Returns:
+        A tuple of dataframes, where the first is the MSA samples, and the second is the DA samples.
+    """
     MSA_df = df[df["predicted_dialect_26"] == "MSA"]
     DA_df = df[df["predicted_dialect_26"] != "MSA"]
     return (MSA_df, DA_df)
 
 
 def split_data_by_ALDi(df):
+    """Split the data into low and high ALDi samples.
+
+    Args:
+        df: The dataframe of annotated samples.
+
+    Returns:
+        A tuple of dataframes, where the first is the low ALDi samples, and the second is the high ALDi samples.
+    """
+    # Discard MSA samples
     DA_df = df[df["predicted_dialect_26"] != "MSA"]
+
     low_ALDi_df = DA_df[DA_df["ALDi"] < 0.5]
     high_ALDi_df = DA_df[DA_df["ALDi"] >= 0.5]
 
@@ -109,8 +175,10 @@ def split_data_by_ALDi(df):
 
 
 if __name__ == "__main__":
-    evaluation_datasets = load_datasets()
+    OUTPUT_DIR = "output/ci_plots/"
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+    evaluation_datasets = load_datasets()
     for evaluation_dataset in evaluation_datasets:
         evaluation_df = evaluation_dataset.df
         print(evaluation_dataset.dataset_name)
@@ -137,6 +205,7 @@ if __name__ == "__main__":
                 diff_MSA_DA_agreement = compute_agreement_score(
                     MSA_df, label, label_type
                 ) - compute_agreement_score(DA_df, label, label_type)
+
                 plt.plot(
                     [diff_MSA_DA_agreement, diff_MSA_DA_agreement],
                     [0, 30],
@@ -162,5 +231,15 @@ if __name__ == "__main__":
                 )
 
                 plt.legend(title=evaluation_dataset.dataset_name + ": " + label)
+
+                plt.savefig(
+                    str(
+                        Path(
+                            OUTPUT_DIR, f"{evaluation_dataset.dataset_name}_{label}.pdf"
+                        )
+                    ),
+                    bbox_inches="tight",
+                )
+
         except Exception as e:
             print(e)
