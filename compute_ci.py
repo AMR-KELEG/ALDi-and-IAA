@@ -4,6 +4,7 @@ from collections import Counter
 from datasets import LabelType, load_datasets
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def compute_percentage_of_full_agreement(
@@ -127,16 +128,21 @@ def compute_confidence_interval(df1, df2, label, label_type, N_bootstrap=5000):
     Returns:
         _description_
     """
+    df1["dataset_id"] = "1"
+    df2["dataset_id"] = "2"
+    df = pd.concat([df1, df2])
     differences = []
     for i in tqdm(range(N_bootstrap)):
-        bootstrapped_df1 = df1.sample(df1.shape[0], random_state=i, replace=True)
-        bootstrapped_df2 = df2.sample(df2.shape[0], random_state=i, replace=True)
-
+        bootstrapped_df = df.sample(df.shape[0], random_state=i, replace=True)
         agreement_1 = compute_agreement_score(
-            bootstrapped_df1, label_name=label, label_type=label_type
+            bootstrapped_df[bootstrapped_df["dataset_id"] == "1"],
+            label_name=label,
+            label_type=label_type,
         )
         agreement_2 = compute_agreement_score(
-            bootstrapped_df2, label_name=label, label_type=label_type
+            bootstrapped_df[bootstrapped_df["dataset_id"] == "2"],
+            label_name=label,
+            label_type=label_type,
         )
         differences.append(agreement_1 - agreement_2)
     return differences
