@@ -20,6 +20,10 @@ camel_data -i defaults
 7| DART | [Dropbox](https://www.dropbox.com/s/jslg6fzxeu47flu/DART.zip?dl=0) |
 8| Mawqif | Provided by the authors |
 9| Qweet | [Dropbox](https://www.dropbox.com/sh/coba3b1nqkyloa8/AAC4Sk5WQvtXZRgH5liBkMiGa?dl=0)|
+10| ASAD | Provided by the authors (might not be the same as the one in their paper!) |
+11| LetMI | Provided by the authors |
+12| L-HSAB | Provided by the authors |
+13| MLMA | Provided by the authors (some labels might be missing!)|
 
 ## Running the experiments
 ```
