@@ -1,4 +1,7 @@
+# https://github.com/neshitov/bootstrap_interval/blob/master/bootstrap_interval.py
+
 import os
+import re
 from pathlib import Path
 from collections import Counter
 from datasets import LabelType, load_datasets
@@ -115,18 +118,19 @@ def compute_agreement_score(
         )
 
 
-def compute_confidence_interval(df1, df2, label, label_type, N_bootstrap=5000):
+def compute_confidence_interval(df1, df2, label, label_type, alpha, N_bootstrap=5000):
     """Compute the confidence interval for the difference in agreement scores between two datasets.
 
     Args:
         df1:
-        df2: _description_
-        label: _description_
-        label_type: _description_
-        N_bootstrap: .
+        df2:
+        label:
+        label_type:
+        alpha: The significance value
+        N_bootstrap:
 
     Returns:
-        _description_
+        The confidence interval for the difference in agreement scores
     """
     df1["dataset_id"] = "1"
     df2["dataset_id"] = "2"
@@ -145,7 +149,11 @@ def compute_confidence_interval(df1, df2, label, label_type, N_bootstrap=5000):
             label_type=label_type,
         )
         differences.append(agreement_1 - agreement_2)
-    return differences
+
+    differences = pd.Series(differences)
+    lower_val = differences.quantile(q=alpha / 2, interpolation="nearest")
+    higher_val = differences.quantile(q=1 - (alpha / 2), interpolation="nearest")
+    return differences, [lower_val, higher_val]
 
 
 def split_data_by_MSA(df):
@@ -183,7 +191,9 @@ def split_data_by_ALDi(df):
 if __name__ == "__main__":
     OUTPUT_DIR = "output/ci_plots/"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    BINWIDTH = 1
 
+    confidence_interval_table_rows = []
     evaluation_datasets = load_datasets()
     for evaluation_dataset in evaluation_datasets:
         evaluation_df = evaluation_dataset.df
@@ -201,11 +211,27 @@ if __name__ == "__main__":
             ):
                 figure = plt.figure()
 
-                agreement_differences = compute_confidence_interval(
-                    MSA_df, DA_df, label, label_type, N_bootstrap=100
+                agreement_differences, [
+                    lower_val,
+                    higher_val,
+                ] = compute_confidence_interval(
+                    MSA_df,
+                    DA_df,
+                    label,
+                    label_type,
+                    N_bootstrap=5000,
+                    alpha=0.05,
                 )
                 plt.hist(
-                    agreement_differences, alpha=0.5, label="MSA - DA", color="grey"
+                    agreement_differences,
+                    alpha=0.5,
+                    label="MSA - DA",
+                    color="grey",
+                    bins=range(
+                        int(min(agreement_differences)),
+                        round(max(agreement_differences)) + BINWIDTH,
+                        BINWIDTH,
+                    ),
                 )
 
                 diff_MSA_DA_agreement = compute_agreement_score(
@@ -218,14 +244,27 @@ if __name__ == "__main__":
                     color="grey",
                 )
 
-                agreement_differences = compute_confidence_interval(
-                    low_ALDi_df, high_ALDi_df, label, label_type, N_bootstrap=100
+                agreement_differences, [
+                    lower_val,
+                    higher_val,
+                ] = compute_confidence_interval(
+                    low_ALDi_df,
+                    high_ALDi_df,
+                    label,
+                    label_type,
+                    N_bootstrap=5000,
+                    alpha=0.05,
                 )
                 plt.hist(
                     agreement_differences,
                     alpha=0.5,
                     label="low ALDi - high ALDi",
                     color="green",
+                    bins=range(
+                        int(min(agreement_differences)),
+                        round(max(agreement_differences)) + BINWIDTH,
+                        BINWIDTH,
+                    ),
                 )
                 diff_low_high_ALDi_agreement = compute_agreement_score(
                     low_ALDi_df, label, label_type
@@ -247,5 +286,16 @@ if __name__ == "__main__":
                     bbox_inches="tight",
                 )
 
+                lower_val = round(lower_val, 2)
+                higher_val = round(higher_val, 2)
+                confidence_interval_row = (
+                    f"{re.sub('_', ' ', label)} & {re.sub('_', ' ', evaluation_dataset.dataset_name)}"
+                    f" & \drawnumberline{{{lower_val}}}{{{higher_val}}}{{{'red' if lower_val <=0 and higher_val >= 0 else 'green'}}} & $[{lower_val}, {higher_val}]$ \\\\"
+                )
+                confidence_interval_table_rows.append(confidence_interval_row)
+
         except Exception as e:
             print(e)
+
+    confidence_interval_table_rows = sorted(confidence_interval_table_rows)
+    print("\n".join(confidence_interval_table_rows))
