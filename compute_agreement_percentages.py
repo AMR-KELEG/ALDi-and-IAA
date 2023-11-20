@@ -266,11 +266,11 @@ def generate_bins(df, label_name, label_type, bins_boundaries):
     for bin_st, bin_end in zip(bins_boundaries[:-1], bins_boundaries[1:]):
         if bin_end == 1:
             bin_label_values = df.loc[
-                (df["ALDi"] >= bin_st) & df["ALDi"] <= bin_end, label_name
+                (df["ALDi"] >= bin_st) & (df["ALDi"] <= bin_end), label_name
             ]
         else:
             bin_label_values = df.loc[
-                (df["ALDi"] >= bin_st) & df["ALDi"] < bin_end, label_name
+                (df["ALDi"] >= bin_st) & (df["ALDi"] < bin_end), label_name
             ]
 
         if label_type == LabelType.CONF:
