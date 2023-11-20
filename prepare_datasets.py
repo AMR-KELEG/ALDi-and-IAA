@@ -187,7 +187,7 @@ if __name__ == "__main__":
     df[LABEL] = df.apply(
         lambda row: [row["Majority_Label"]] * 3
         if int(row["Agreement"]) == 100
-        else ["Offensive", "No-Offensive", row["Majority_Label"]],
+        else ["Offensive", "Non-Offensive", row["Majority_Label"]],
         axis=1,
     )
     augment_with_labels(df)
