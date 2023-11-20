@@ -113,7 +113,8 @@ def generate_scatter_plot(
     # )
 
     plt.title(
-        re.sub("_", " ", label_name.capitalize()),
+        re.sub("_", " ", label_name.capitalize())
+        + f"- {re.sub('_', ' ', dataset_name.capitalize())}",
         fontsize=8,
     )
 
@@ -150,44 +151,6 @@ def generate_scatter_plot(
             f"{dataset_name}_{n_bins}_{label_name}{'_merged' if plot_hist else ''}.pdf",
         ),
         bbox_inches="tight",
-    )
-
-
-def compute_percentage_of_agreement(
-    annotations_df, label_column, threshold_number_of_agreeing_annotators=None
-):
-    if not threshold_number_of_agreeing_annotators:
-        # Make sure all the samples have the same number of annotations
-        assert (
-            len(
-                set(
-                    [
-                        len(annotations)
-                        for annotations in annotations_df[label_column].tolist()
-                    ]
-                )
-            )
-            == 1
-        )
-
-        # Infer the total number of annotators from the dataset
-        threshold_number_of_agreeing_annotators = len(
-            annotations_df[label_column].iloc[0]
-        )
-
-    n_agreeing_on_majority_votes = [
-        Counter(annotations).most_common(1)[0][1]
-        for annotations in annotations_df[label_column].tolist()
-    ]
-    return (
-        100
-        * sum(
-            [
-                n_agreeing >= threshold_number_of_agreeing_annotators
-                for n_agreeing in n_agreeing_on_majority_votes
-            ]
-        )
-        / annotations_df.shape[0]
     )
 
 
@@ -238,8 +201,11 @@ def generate_ALDi_histograms(
         "arabic_dialect_familiarity",
         "LetMI",
         "qweet",
+        "L-HSAB",
     ]:
         Y_LIM = 1400
+    elif dataset_name in ["ASAD"]:
+        Y_LIM = 25000
     else:
         Y_LIM = 15000
 
