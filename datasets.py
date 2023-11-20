@@ -46,6 +46,13 @@ class IndividualLabelsDataset:
                     ",".join([str(n_labels) for n_labels in set(n_labels_per_sample)]),
                 )
 
+                # TODO: Refactor this!
+                print(Counter(n_labels_per_sample).most_common())
+                print("Discarding samples with no. of labels != 3!")
+                self.df = self.df[
+                    self.df.apply(lambda row: len(row[label]) == 3, axis=1)
+                ]
+
     def export(self, output_dir):
         self.df.to_csv(
             str(Path(output_dir, f"{self.dataset_name}.tsv")), sep="\t", index=False
