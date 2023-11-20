@@ -1,3 +1,4 @@
+import re
 import os
 import pandas as pd
 from pathlib import Path
@@ -77,6 +78,40 @@ def form_aggregated_row(gdf, SINGLE_VALUE_COLUMNS, ANNOTATION_COLUMNS, LABELS):
 if __name__ == "__main__":
     OUTPUT_DIR = "data/processed"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    ############ DATASET ############
+    # ASAD
+    df = pd.read_csv("data/raw_data/ASAD_annotations.csv")
+    LABEL = "sentiment"
+
+    df["text"].fillna("", inplace=True)
+    df["text"] = df["text"].apply(lambda s: s.strip()[2:-2])
+    # TODO: Is this is the only preprocessing step needed?
+    df["text"] = df["text"].apply(lambda s: re.sub("\\\\r\\\\n", "\r\n", s))
+
+    df[LABEL] = df["class-annotated"].apply(
+        lambda s: [l.strip()[1:-1] for l in s.strip()[1:-1].split(",")]
+    )
+    # Only keep samples of three labels!
+    df = df[df[LABEL].apply(lambda l: len(l) == 3)]
+    augment_with_labels(df)
+    df[COMMON_COLUMNS + [LABEL]].to_csv(
+        str(Path(OUTPUT_DIR, "ASAD.tsv")), sep="\t", index=False
+    )
+
+    ############ DATASET ############
+    # L-HSAB
+    df = pd.read_excel("data/raw_data/L-HSAB_SyrianCoders_ConflictFree.xlsx")
+    LABEL = "hate_speech"
+    df[LABEL] = df.apply(
+        lambda row: [row["Rater#1 (F)"], row["Rater#2(M)"], row["Rater#3(F)"]], axis=1
+    )
+    df["text"] = df["Tweet"]
+    augment_with_labels(df)
+    df[COMMON_COLUMNS + [LABEL]].to_csv(
+        str(Path(OUTPUT_DIR, "L-HSAB.tsv")), sep="\t", index=False
+    )
+
     ############ DATASET ############
     # Questions
     LABEL = "qweet"
@@ -341,6 +376,8 @@ if __name__ == "__main__":
         str(Path(OUTPUT_DIR, "Mawqif_sarcasm.tsv")), sep="\t", index=False
     )
 
+    ############ DATASET ############
+    # Arabic Dialect Familiarity
     df = pd.read_csv("data/raw_data/arabic_dialect_familiarity.csv")
     SINGLE_VALUE_COLUMNS = ["id", "text", "original_dialect", "original_sarcasm"]
     ANNOTATION_COLUMNS = [

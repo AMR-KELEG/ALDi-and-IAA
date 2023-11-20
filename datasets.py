@@ -109,6 +109,14 @@ def load_datasets():
     labels_lists.append(["qweet"])
     labels_types_lists.append([LabelType.CONF])
 
+    dataset_names.append("L-HSAB")
+    labels_lists.append(["hate_speech"])
+    labels_types_lists.append([LabelType.INDIV])
+
+    dataset_names.append("ASAD")
+    labels_lists.append(["sentiment"])
+    labels_types_lists.append([LabelType.INDIV])
+
     datasets = []
     for dataset_name, labels, labels_types in zip(
         dataset_names, labels_lists, labels_types_lists
