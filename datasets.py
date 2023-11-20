@@ -21,6 +21,9 @@ class IndividualLabelsDataset:
         self.labels = labels
         self.labels_types = labels_types
 
+        self.df.loc[self.df["ALDi"] < 0, "ALDi"] = 0
+        self.df.loc[self.df["ALDi"] > 1, "ALDi"] = 1
+
         for label, label_type in zip(labels, labels_types):
             # TODO: Apply preprocessing for the other types
             if label_type == LabelType.INDIV:

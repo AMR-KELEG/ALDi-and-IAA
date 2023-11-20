@@ -27,7 +27,7 @@ COMMON_COLUMNS = [TEXT_COLUMN, ALDi_COLUMN, DIALECT6_COLUMN, DIALECT26_COLUMN]
 def compute_score(sentence):
     features = tokenizer(sentence, return_tensors="pt", max_length=512, truncation=True)
     o = model(**features).logits[0].tolist()[0]
-    return o
+    return max(min(o, 1), 0)
 
 
 def augment_with_labels(df):
