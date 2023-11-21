@@ -18,6 +18,7 @@ GREY = "#A9A6A7"
 GREY = "#D0CFCF"
 DARK_GREY = "#837f81"
 GREEN = "#1B7837"
+ORANGE = "#E66101"
 
 PLOTS_DIR = "plots/"
 os.makedirs(PLOTS_DIR, exist_ok=True)
@@ -94,27 +95,23 @@ def generate_scatter_plot(
     # plt.legend(title="", frameon=False, prop={"size": 5})
     ax.set_xlim(0, 1)
 
-    ### Fit a polynomial curve
-    ### xp = np.linspace(0, 1, 100)
+    # Fit a polynomial curve
+    xp = np.linspace(0, 1, 100)
 
     ### 2nd degree polynomial
     ### coef = np.polyfit(x, agreement_percentages, 2)
     ### yp = [coef[-1] + coef[1]*x + coef[0] * (x**2) for x in xp]
 
-    ### coef = np.polyfit(x, agreement_percentages, 1)
-    ### yp = [coef[-1] + coef[0] * x for x in xp]
-    ### _ = plt.plot(xp, yp, "--", color=VIOLET, alpha=0.2)
+    coef = np.polyfit(x, agreement_percentages, 1)
+    yp = [coef[-1] + coef[0] * x for x in xp]
+    _ = ax.plot(xp, yp, "--", color=ORANGE, alpha=0.5)
 
     pearson_coef = np.corrcoef(x, agreement_percentages)[1, 0]
 
-    # plt.title(
-    #     f"Pearson's coefficient={round(pearson_coef, 2)}, "
-    #     f"Aggrement(ALDi)={round(coef[0], 2)}* ALDi + {round(coef[-1], 2)}"
-    # )
-
     plt.title(
         re.sub("_", " ", label_name.capitalize())
-        + f"- {re.sub('_', ' ', dataset_name.capitalize())}",
+        + f" - {re.sub('_', ' ', dataset_name.capitalize())}"
+        + f"\nr = {round(pearson_coef, 2)}",
         fontsize=8,
     )
 
