@@ -1,4 +1,5 @@
 import os
+import re
 import pandas as pd
 from pathlib import Path
 from enum import Enum
@@ -9,9 +10,32 @@ LabelType = Enum("LabelType", ["CONF", "INDIV", "PROPORTION"])
 DATA_DIR = "data/processed/"
 
 
+def clean_label(label):
+    """Delete excess quotes and apostrophes from the label text."""
+    cleaned_label = re.sub(r"[']+", "", label)
+    cleaned_label = re.sub(r'["]+', "", cleaned_label)
+    return cleaned_label
+
+
 def get_majority_vote(individual_annotations):
-    label, count = Counter(individual_annotations).most_common(1)[0]
-    return (label, count / len(individual_annotations))
+    labels_counts = Counter(individual_annotations).most_common()
+
+    if len(labels_counts) == 1:
+        label = labels_counts[0][0]
+
+    else:
+        label = (
+            "NO_MAJORITY"
+            if labels_counts[0][-1] == labels_counts[1][-1]
+            else labels_counts[0][0]
+        )
+
+    return clean_label(label)
+
+
+def get_majority_vote_confidence(label, confidence_score):
+    """Return the majority-vote label if its confidence score is >= 0.5, otherwise return NO_MAJORITY."""
+    return clean_label(label) if confidence_score >= 0.5 else "NO_MAJORITY"
 
 
 class IndividualLabelsDataset:
@@ -33,6 +57,11 @@ class IndividualLabelsDataset:
                 )
             elif label_type == LabelType.CONF or label_type == LabelType.PROPORTION:
                 self.df[label] = self.df[label].apply(lambda s: s[1:-1].split(","))
+
+                self.df[f"{label}_majority_vote"] = self.df[label].apply(
+                    lambda t: get_majority_vote_confidence(t[0], float(t[-1]))
+                )
+
                 # Parse the confidence score (the last value in the tuple)
                 self.df[label] = self.df[label].apply(lambda t: t[:-1] + [float(t[-1])])
 
