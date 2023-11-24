@@ -2,12 +2,10 @@ import os
 import re
 import numpy as np
 from pathlib import Path
-from collections import Counter
 import matplotlib
 import matplotlib.pyplot as plt
 from datasets import load_datasets, LabelType
-from matplotlib.ticker import FormatStrFormatter
-from pprint import pprint
+from scipy import stats
 
 EPS = 1e-6
 font = {"weight": "bold", "size": 8}
@@ -47,6 +45,8 @@ def generate_scatter_plot(
     plot_hist=True,
     figsize=(6.3 / 4, 1.25),
     ALDi_scores=None,
+    label_value=None,
+    use_log_scale=False,
 ):
     plt.figure(figsize=figsize)
     bins_boundaries = [bin_boundaries for bin_boundaries, bin_stats in bins_stats]
@@ -66,6 +66,7 @@ def generate_scatter_plot(
             save_fig=False,
             alpha=0.2,
             show_yticks=False,
+            use_log_scale=use_log_scale,
         )
 
     x = [(bin_st + bin_end) / 2 for bin_st, bin_end in bins_boundaries]
@@ -106,12 +107,24 @@ def generate_scatter_plot(
     yp = [coef[-1] + coef[0] * x for x in xp]
     _ = ax.plot(xp, yp, "--", color=ORANGE, alpha=0.5)
 
-    pearson_coef = np.corrcoef(x, agreement_percentages)[1, 0]
+    # TODO: Understand how to use the p-value!
+    try:
+        pearson_r_result = stats.pearsonr(x, agreement_percentages)
+        pearson_coef, p_value = pearson_r_result.statistic, pearson_r_result.pvalue
+        pearson_coef = round(pearson_coef, 2)
+    except:
+        print("Issue in computing Pearson correlation coefficient!")
+        pearson_coef = "N/A"
+        p_value = "N/A"
 
     plt.title(
         re.sub("_", " ", label_name.capitalize())
         + f" - {re.sub('_', ' ', dataset_name.capitalize())}"
-        + f"\nr = {round(pearson_coef, 2)}",
+        + (
+            f"\n({label_value}), r = {pearson_coef}"
+            if label_value
+            else f"\nr = {pearson_coef}"
+        ),
         fontsize=8,
     )
 
@@ -123,6 +136,8 @@ def generate_scatter_plot(
     RANGE = 40
     lower_y = 10 * (min(agreement_percentages) // 10)
     upper_y = 10 * (1 + max(agreement_percentages) // 10)
+    OBSERVED_RANGE = upper_y - lower_y
+    RANGE = max(RANGE, OBSERVED_RANGE)
 
     if upper_y - lower_y < RANGE:
         offset = RANGE - (upper_y - lower_y)
@@ -132,6 +147,10 @@ def generate_scatter_plot(
     if upper_y > 105:
         upper_y = 105
         lower_y = upper_y - RANGE
+
+    if lower_y < 0:
+        lower_y = 0
+        upper_y = lower_y + RANGE
     ax.set_ylim(lower_y, upper_y)
 
     xticks = [0.2, 0.4, 0.6, 0.8]
@@ -142,10 +161,11 @@ def generate_scatter_plot(
     ax.set_yticks(ticks=yticks, labels=yticks, fontsize=5)
 
     plt.tight_layout()
+    label_value = re.sub(r" ", r"-", label_value) if label_value else None
     plt.savefig(
         Path(
             PLOTS_DIR,
-            f"{dataset_name}_{n_bins}_{label_name}{'_merged' if plot_hist else ''}.pdf",
+            f"{dataset_name}_{n_bins}_{label_name}{'_merged' if plot_hist else ''}{f'_{label_value}' if label_value else ''}.pdf",
         ),
         bbox_inches="tight",
     )
@@ -159,6 +179,7 @@ def generate_ALDi_histograms(
     save_fig=False,
     alpha=1,
     show_yticks=True,
+    use_log_scale=False,
 ):
     if figsize:
         plt.figure(figsize=figsize)
@@ -167,7 +188,7 @@ def generate_ALDi_histograms(
         ax_other = plt.gca()
         ax = ax_other.twinx()
 
-    ax.hist(ALDi_scores, bins=bins, color=VIOLET, alpha=alpha)
+    ax.hist(ALDi_scores, bins=bins, color=VIOLET, alpha=alpha, log=use_log_scale)
 
     n_samples_per_bin = {
         (bin_st, bin_end): ((ALDi_scores >= bin_st) & (ALDi_scores < bin_end)).sum()
@@ -186,34 +207,31 @@ def generate_ALDi_histograms(
 
     ax.set_xticks(ticks=bins[1:], labels=bins[1:], rotation=90, fontsize=6)
 
-    # Set the ylim
-    Y_LIM = None
-    if dataset_name in ["ArSarcasm-v1", "YouTube_cyberbullying"]:
-        Y_LIM = 7000
-    elif dataset_name in [
-        "iSarcasm_third_party",
-        "MPOLD",
-        "Mawqif_stance",
-        "Mawqif_sarcasm",
-        "arabic_dialect_familiarity",
-        "LetMI",
-        "qweet",
-        "L-HSAB",
-    ]:
-        Y_LIM = 1400
-    elif dataset_name in ["ASAD"]:
-        Y_LIM = 25000
+    if use_log_scale:
+        Y_LIM = 100000
+        ax.set_ylim(1, Y_LIM)
+        if show_yticks:
+            yticks = [int(v) for v in list(ax.get_yticks())[1:]]
+            ax.set_yticks(ticks=yticks, labels=yticks, fontsize=6)
+        else:
+            ax.set_yticks([10**p for p in range(0, 6)], fontsize=4)
     else:
-        Y_LIM = 15000
+        # Set the ylim
+        Y_LIMITS = [50, 120, 500, 1400, 7000, 15000, 25000, 100000]
 
-    # yticks = [int(v) for v in list(ax.get_yticks())[1:]] + [least_n_samples_per_bin]
-    if show_yticks:
-        yticks = [int(v) for v in list(ax.get_yticks())[1:]]
-        ax.set_yticks(ticks=yticks, labels=yticks, fontsize=6)
-    else:
-        yticks = [least_n_samples_per_bin, most_n_samples_per_bin]
-        ax.set_yticks(ticks=yticks, labels=yticks, fontsize=4)
-    ax.set_ylim(0, Y_LIM)
+        for lim in Y_LIMITS:
+            if lim > most_n_samples_per_bin:
+                Y_LIM = lim
+                break
+        # yticks = [int(v) for v in list(ax.get_yticks())[1:]] + [least_n_samples_per_bin]
+        if show_yticks:
+            yticks = [int(v) for v in list(ax.get_yticks())[1:]]
+            ax.set_yticks(ticks=yticks, labels=yticks, fontsize=6)
+        else:
+            yticks = [least_n_samples_per_bin, most_n_samples_per_bin]
+            ax.set_yticks(ticks=yticks, labels=yticks, fontsize=4)
+
+        ax.set_ylim(0, Y_LIM)
 
     plt.tight_layout()
 
@@ -264,28 +282,21 @@ def generate_bins(df, label_name, label_type, bins_boundaries):
 
         n_samples = bin_label_values.shape[0]
 
-        total_agreement_percentages.append(
-            (
-                (bin_st, bin_end),
-                {
-                    "#_samples": n_samples,
-                    "#_complete_agreement": n_complete_agreement_samples,
-                    "%_complete_agreement": round(
-                        100 * n_complete_agreement_samples / n_samples, 2
-                    ),
-                    "%_complete_agreement": round(
-                        100 * n_complete_agreement_samples / n_samples, 2
-                    ),
-                },
-            )
-        )
-
-        for label in unique_labels:
-            total_agreement_percentages[-1][-1][
-                f"%_complete_agreement_{label_name}_{label}"
-            ] = round(
-                100 * sum([l == label for l in complete_agreement_labels]) / n_samples,
-                2,
+        if n_samples:
+            total_agreement_percentages.append(
+                (
+                    (bin_st, bin_end),
+                    {
+                        "#_samples": n_samples,
+                        "#_complete_agreement": n_complete_agreement_samples,
+                        "%_complete_agreement": round(
+                            100 * n_complete_agreement_samples / n_samples, 2
+                        ),
+                        "%_complete_agreement": round(
+                            100 * n_complete_agreement_samples / n_samples, 2
+                        ),
+                    },
+                )
             )
 
     print(label_name, label_type)
@@ -319,14 +330,36 @@ if __name__ == "__main__":
                 df,
                 label,
                 label_type,
-                # bins_boundaries=[0, 0.11, 0.44, 0.77, 1],
                 bins_boundaries=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
             )
-            i += 1
             generate_scatter_plot(
                 dataset_name,
                 label,
                 bins_stats,
                 ALDi_scores=df["ALDi"],
                 plot_boundaries=True,
+                use_log_scale=False,
             )
+
+            unique_label_values = sorted(set(df[f"{label}_majority_vote"].unique()))
+
+            for unique_label_value in unique_label_values:
+                df_unique_label_value = df.loc[
+                    df[f"{label}_majority_vote"] == unique_label_value
+                ]
+                bins_stats = generate_bins(
+                    df_unique_label_value,
+                    label,
+                    label_type,
+                    bins_boundaries=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+                )
+                generate_scatter_plot(
+                    dataset_name,
+                    label,
+                    bins_stats,
+                    ALDi_scores=df_unique_label_value["ALDi"],
+                    plot_boundaries=True,
+                    label_value=unique_label_value,
+                    use_log_scale=False,
+                )
+            i += 1
