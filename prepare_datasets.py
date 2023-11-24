@@ -78,7 +78,25 @@ def form_aggregated_row(gdf, SINGLE_VALUE_COLUMNS, ANNOTATION_COLUMNS, LABELS):
 if __name__ == "__main__":
     OUTPUT_DIR = "data/processed"
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    ############ DATASET ############
+    # MPOLD
+    LABEL = "offensive"
+    df = pd.read_excel(
+        "data/raw_data/Arabic_offensive_comment_detection_annotation_4000_selected.xlsx"
+    )
 
+    df[TEXT_COLUMN] = df["Comment"]
+    df[LABEL] = df.apply(
+        lambda row: [row["Majority_Label"]] * 3
+        if int(row["Agreement"]) == 100
+        else ["Offensive", "Non-Offensive", row["Majority_Label"]],
+        axis=1,
+    )
+    augment_with_labels(df)
+
+    df[COMMON_COLUMNS + [LABEL, "Platform"]].to_csv(
+        str(Path(OUTPUT_DIR, "MPOLD.tsv")), sep="\t", index=False
+    )
     ############ DATASET ############
     # ASAD
     df = pd.read_csv("data/raw_data/ASAD_annotations.csv")
