@@ -184,6 +184,10 @@ if __name__ == "__main__":
     )
 
     df[TEXT_COLUMN] = df["Comment"]
+
+    # Check the values of Agreement scores
+    assert set([int(a) for a in df["Agreement"].tolist()]) == {100, 66}
+
     df[LABEL] = df.apply(
         lambda row: [row["Majority_Label"]] * 3
         if int(row["Agreement"]) == 100
