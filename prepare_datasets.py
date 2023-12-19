@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 from transformers import AutoTokenizer, BertForSequenceClassification
 from tqdm import tqdm
+from glob import glob
 
 tqdm.pandas()
 from camel_tools.dialectid import DIDModel6, DIDModel26
@@ -92,55 +93,12 @@ if __name__ == "__main__":
     df[LABEL] = df["class-annotated"].apply(
         lambda s: [l.strip()[1:-1] for l in s.strip()[1:-1].split(",")]
     )
-    # Only keep samples of three labels!
-    df = df[df[LABEL].apply(lambda l: len(l) == 3)]
     augment_with_labels(df)
     df[COMMON_COLUMNS + [LABEL]].to_csv(
         str(Path(OUTPUT_DIR, "ASAD.tsv")), sep="\t", index=False
     )
 
     ############ DATASET ############
-    # L-HSAB
-    df = pd.read_excel("data/raw_data/L-HSAB_SyrianCoders_ConflictFree.xlsx")
-    LABEL = "hate_speech"
-    df[LABEL] = df.apply(
-        lambda row: [row["Rater#1 (F)"], row["Rater#2(M)"], row["Rater#3(F)"]], axis=1
-    )
-    df["text"] = df["Tweet"]
-    augment_with_labels(df)
-    df[COMMON_COLUMNS + [LABEL]].to_csv(
-        str(Path(OUTPUT_DIR, "L-HSAB.tsv")), sep="\t", index=False
-    )
-
-    ############ DATASET ############
-    # Questions
-    LABEL = "qweet"
-    df = pd.read_csv("data/raw_data/qweet.txt", sep="\t", header=None)
-    df.columns = ["ID", "text", "qweet"]
-    # Drop values of low confidence
-    df = df[df["qweet"] > 0.3]
-    df[LABEL] = df[LABEL].apply(lambda conf: ("qweet", conf))
-    augment_with_labels(df)
-    df[COMMON_COLUMNS + [LABEL]].to_csv(
-        str(Path(OUTPUT_DIR, "qweet.tsv")), sep="\t", index=False
-    )
-
-    # LetMI
-    LABEL1 = "misogyny_general"
-    LABEL2 = "misogyny_specific"
-    df = pd.read_excel("data/raw_data/LetMI.xlsx")
-    df["misogyny_general"] = df.apply(
-        lambda row: [row[f"r{i}_gen"] for i in range(1, 3)], axis=1
-    )
-    df["misogyny_specific"] = df.apply(
-        lambda row: [row[f"r{i}_spec"] for i in range(1, 3)], axis=1
-    )
-    df[TEXT_COLUMN] = df["tweet"]
-    augment_with_labels(df)
-    df[COMMON_COLUMNS + [LABEL1, LABEL2]].to_csv(
-        str(Path(OUTPUT_DIR, "LetMI.tsv")), sep="\t", index=False
-    )
-
     # YouTube Cyberbullying
     LABEL = "hate_speech"
     df = pd.read_excel("data/raw_data/YouTube_cyberbullying.xlsx")
@@ -227,7 +185,17 @@ if __name__ == "__main__":
     # ArSAS
     LABEL1 = "sentiment"
     LABEL2 = "speech_act"
-    df = pd.read_csv("data/raw_data/ArSAS..txt", sep="\t")
+
+    # Loading the data using pandas merged multiple samples into 1 because of the appearance of "
+    filename = "data/raw_data/ArSAS..txt"
+    with open(filename, "r") as f:
+        lines = [l.strip() for l in f]
+
+    fields = [l.split("\t") for l in lines]
+    header = fields[0]
+    data = fields[1:]
+
+    df = pd.DataFrame(data, columns=header)
 
     # Map the columns with confidence scores
     # NOTE: Confidence scores are nearly categorical (1/3, 2/3, 3/3)
@@ -262,28 +230,24 @@ if __name__ == "__main__":
     )
 
     ############ DATASET ############
-    # iSaracasm (third party)
-    LABEL = "sarcasm"
-    df = pd.read_csv("data/raw_data/iSarcasm_third_party.csv")
-    df[LABEL] = df.apply(
-        lambda row: row["#humans_sarcasm"] * ["Not Sarcasm"]
-        + (5 - row["#humans_sarcasm"]) * ["Sarcasm"],
-        axis=1,
-    )
-    df["original_dialect"] = df["dialect"]
-
-    augment_with_labels(df)
-
-    df[COMMON_COLUMNS + [LABEL, "original_dialect"]].to_csv(
-        str(Path(OUTPUT_DIR, "iSarcasm_third_party.tsv")), sep="\t", index=False
-    )
-
-    ############ DATASET ############
     # DART
-    # TODO: Start from raw files
-    df = pd.read_csv("data/raw_data/DART_with_ALDi.tsv", sep="\t")
+    dfs = []
+    filenames = glob("data/raw_data/DART/cf-data/*.txt")
+    for filename in filenames:
+        dialect = filename.split("/")[-1].split(".")[0]
+        with open(filename, "r") as f:
+            fields = [l.strip().split("\t") for l in f if l.strip()]
+            assert set([len(f_l) for f_l in fields]) == {3}
+        dfs.append(
+            pd.DataFrame(fields[1:], columns=["score(/3)", "tweet_Id", "tweet_text"])
+        )
+        dfs[-1]["dialect"] = dialect
+
+    df = pd.concat(dfs)
     LABEL = "dialect"
-    df[LABEL] = df.apply(lambda row: (row["dialect"], row["score(/3)"] / 3), axis=1)
+    df[LABEL] = df.apply(
+        lambda row: (row["dialect"], int(row["score(/3)"]) / 3), axis=1
+    )
     df[TEXT_COLUMN] = df["tweet_text"]
     augment_with_labels(df)
 
