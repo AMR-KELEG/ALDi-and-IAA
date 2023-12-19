@@ -77,9 +77,11 @@ class IndividualLabelsDataset:
 
                 # TODO: Refactor this!
                 print(Counter(n_labels_per_sample).most_common())
-                print("Discarding samples with no. of labels != 3!")
+                print(
+                    f"Discarding ({self.df[self.df.apply(lambda row: len(row[label]) < 3, axis=1)].shape[0]}) samples with no. of labels < 3!"
+                )
                 self.df = self.df[
-                    self.df.apply(lambda row: len(row[label]) == 3, axis=1)
+                    self.df.apply(lambda row: len(row[label]) >= 3, axis=1)
                 ]
 
     def export(self, output_dir):
