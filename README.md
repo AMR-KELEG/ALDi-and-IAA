@@ -1,6 +1,8 @@
 # ALDi-and-annotator-agreement
 
-## Environment
+The codebase accompanying the `Estimating the Level of Dialectness Predicts Interannotator Agreement in Multi-dialectal Arabic Datasets` paper.
+
+## Environment and Dependencies
 ```
 conda create -n "ALDI_IAA" python=3.10
 pip install -r requirements.txt
@@ -16,26 +18,27 @@ camel_data -i defaults
 3| DCD | [Personal Site](http://alt.qcri.org/~hmubarak/offensive/AJCommentsClassification-CF.xlsx) |
 4| ArSAS| [Personal Site](https://homepages.inf.ed.ac.uk/wmagdy/Resources/ArSAS.zip) |
 5| ArSarcasm-v1 | Provided by the authors |
-6| Arabic Dialect Familiarity | [GitHub](https://raw.githubusercontent.com/iabufarha/arabic-dialect-familiarity/main/dialect_familiarity_sarcasm.csv)|
+6| iSarcasm | [GitHub](https://raw.githubusercontent.com/iabufarha/arabic-dialect-familiarity/main/dialect_familiarity_sarcasm.csv)|
 7| DART | [Dropbox](https://www.dropbox.com/s/jslg6fzxeu47flu/DART.zip?dl=0) |
 8| Mawqif | Provided by the authors |
-9| Qweet | [Dropbox](https://www.dropbox.com/sh/coba3b1nqkyloa8/AAC4Sk5WQvtXZRgH5liBkMiGa?dl=0)|
-10| ASAD | Provided by the authors (might not be the same as the one in their paper!) |
-11| LetMI | Provided by the authors |
-12| L-HSAB | Provided by the authors |
-13| MLMA | Provided by the authors (some labels might be missing!)|
+9| ASAD | Provided by the authors (might not be the same as the one in their paper!) |
 
-## Running the experiments
+## Generating the ALDi-Annotator Agreement Plots
 ```
+conda activate ALDI_IAA
+
 # Download the dataset files
-# NOTE: YouTube Cyberbullying and DART need to be manually downloaded!
+# NOTE: Some of the datasets need to be downloaded manually!
 ./download_datasets.sh
 
 # Augment the dataset files with ALDi scores, and dialect labels
 python prepare_dataset.py
+
+# Generate the Agreement plots
+python compute_agreement_percentages.py
 ```
 
-## Notes about the Mawqif dataset
+## Notes about Mawqif's Files
 |   Job #  |   Task                 |   Topic                   |
 |----------|------------------------|---------------------------|
 |   1      |   Stance               |   Covid vaccine           |
