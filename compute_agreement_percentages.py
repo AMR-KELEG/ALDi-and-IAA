@@ -186,8 +186,22 @@ def generate_scatter_plot(
     ax.set_ylim(lower_y, upper_y)
 
     if plot_mean_ALDis:
-        ax.plot([agreement_disagreement_mean_ALDis[0], agreement_disagreement_mean_ALDis[0]], [lower_y, upper_y], "g--")
-        ax.plot([agreement_disagreement_mean_ALDis[1], agreement_disagreement_mean_ALDis[1]], [lower_y, upper_y], "r--")
+        ax.plot(
+            [
+                agreement_disagreement_mean_ALDis[0],
+                agreement_disagreement_mean_ALDis[0],
+            ],
+            [lower_y, upper_y],
+            "g--",
+        )
+        ax.plot(
+            [
+                agreement_disagreement_mean_ALDis[1],
+                agreement_disagreement_mean_ALDis[1],
+            ],
+            [lower_y, upper_y],
+            "r--",
+        )
 
     xticks = [0.2, 0.4, 0.6, 0.8]
     ax.set_xticks(
@@ -381,7 +395,7 @@ if __name__ == "__main__":
         ]
 
         for bins_boundaries in boundaries_values:
-            # Generate the plots for each independent label within the dataset
+            # Generate the plots for each independent label within the dataset
             for label, label_type in zip(dataset.labels, dataset.labels_types):
                 # Visualize the overall trend
                 bins_stats = generate_bins(

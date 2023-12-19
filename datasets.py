@@ -59,11 +59,15 @@ class IndividualLabelsDataset:
                 self.df[label] = self.df[label].apply(lambda s: s[1:-1].split(","))
 
                 self.df[f"{label}_majority_vote"] = self.df[label].apply(
-                    lambda t: get_majority_vote_confidence(t[0], float(t[-1]))
+                    lambda t: get_majority_vote_confidence(
+                        t[0], float(t[-1].strip().strip("'"))
+                    )
                 )
 
                 # Parse the confidence score (the last value in the tuple)
-                self.df[label] = self.df[label].apply(lambda t: t[:-1] + [float(t[-1])])
+                self.df[label] = self.df[label].apply(
+                    lambda t: t[:-1] + [float(t[-1].strip().strip("'"))]
+                )
 
             n_labels_per_sample = self.df[label].apply(lambda l: len(l)).tolist()
             try:
