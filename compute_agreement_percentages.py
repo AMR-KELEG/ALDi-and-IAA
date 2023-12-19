@@ -57,7 +57,7 @@ def generate_scatter_plot(
     plot_boundaries=False,
     plot_hist=True,
     plot_horizontal_agreement_lines=False,
-    plot_mean_ALDis=True,
+    plot_mean_ALDis=False,
     figsize=(6.3 / 4, 1),
     ALDi_scores=None,
     label_value=None,
