@@ -32,7 +32,7 @@ conda activate ALDI_IAA
 ./download_datasets.sh
 
 # Augment the dataset files with ALDi scores, and dialect labels
-python prepare_dataset.py
+python prepare_datasets.py
 
 # Generate the Agreement plots
 python compute_agreement_percentages.py
