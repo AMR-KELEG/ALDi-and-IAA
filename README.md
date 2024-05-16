@@ -1,4 +1,4 @@
-# ALDi-and-annotator-agreement
+# ALDi-and-IAA
 
 The codebase accompanying the `Estimating the Level of Dialectness Predicts Interannotator Agreement in Multi-dialectal Arabic Datasets` paper.
 
