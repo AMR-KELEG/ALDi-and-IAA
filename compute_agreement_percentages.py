@@ -31,6 +31,7 @@ DATASET_TITLES_MAPPING = {
     "MPOLD": "MPOLD",
     "DCD": "DCD",
     "DART": "DART",
+    "ArSarcasm-v1": "ArSarcasm-v1",
 }
 
 
@@ -127,6 +128,9 @@ def generate_scatter_plot(
         pearson_r_result = stats.pearsonr(x, agreement_percentages)
         pearson_coef, p_value = pearson_r_result.statistic, pearson_r_result.pvalue
         pearson_coef = round(pearson_coef, 2)
+        is_significant_mark = ' *' if p_value < 0.05 else ''
+        if not label_value:
+            print(dataset_name, label_name, pearson_coef, round(coef[0], 2), round(p_value, 5))
     except:
         print("Issue in computing Pearson correlation coefficient!")
         pearson_coef = "N/A"
@@ -135,9 +139,9 @@ def generate_scatter_plot(
     plt.title(
         f"{re.sub('_', ' ', dataset_name.title() if not dataset_name in DATASET_TITLES_MAPPING else DATASET_TITLES_MAPPING[dataset_name])}"
         + (
-            f"\n({label_value}), ρ = {pearson_coef}"
+            f"\n({label_value}), ρ = {pearson_coef}{is_significant_mark}"
             if label_value
-            else f" (ρ = {pearson_coef})"
+            else f" (ρ = {pearson_coef}){is_significant_mark}"
         ),
         fontsize=5,
     )
@@ -360,6 +364,7 @@ def compute_mean_ALDi_scores(df, label_name, label_type):
     """Compute the mean ALDi scores for samples with full agreement and samples with disagreement"""
     is_complete_aggreement = None
     label_annotations = df[label_name].tolist()
+    df = df.copy(deep=True)
 
     if label_type == LabelType.CONF:
         # Complete agreement samples
